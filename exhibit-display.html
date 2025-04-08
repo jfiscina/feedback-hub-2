@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Exhibit Feedback Board</title>
+  <style>
+    /* Basic styling for an attractive display */
+    body {
+      background-color: #f0f4f8;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #007acc;
+      font-size: 2.5em;
+    }
+    .submission {
+      border-bottom: 1px solid #e0e0e0;
+      padding: 15px 0;
+      transition: opacity 0.5s ease-in-out;
+    }
+    .submission:last-child {
+      border-bottom: none;
+    }
+    .submission strong {
+      color: #005999;
+    }
+    .time {
+      font-size: 0.85em;
+      color: #666;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Exhibit Feedback Board</h1>
+    <div id="submissions">
+      <!-- Feedback data from the Google Sheet will appear here -->
+    </div>
+  </div>
+
+  <script>
+    // Your Google Spreadsheet ID (as provided):
+    const SPREADSHEET_ID = '1kirPeRZLtcVTVHea0udCDOMrRnXsar-hw2f0zD1mrNo';
+    // Constructing the URL to fetch JSON data from your published sheet:
+    const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?gid=0&tqx=out:json`;
+
+    // Fetch and display data from the Google Sheet
+    function fetchData() {
+      fetch(sheetUrl)
+        .then(response => response.text())
+        .then(data => {
+          // The returned text includes extra characters at the start; extract valid JSON
+          const jsonStr = data.substring(data.indexOf('{'));
+          const jsonData = JSON.parse(jsonStr);
+          
+          // The rows array holds your data; adjust indices if the sheet columns change
+          const rows = jsonData.table.rows;
+          displayData(rows);
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+        });
+    }
+
+    // Function to update the display with fetched data
+    function displayData(rows) {
+      const container = document.getElementById('submissions');
+      container.innerHTML = ''; // Clear previous content
+
+      rows.forEach(row => {
+        // Adjust these indices based on your Google Sheet's column order.
+        // Here: Column 0: Timestamp, Column 1: Topic, Column 2: Sentiment.
+        const timestamp = row.c[0] && row.c[0].v ? row.c[0].v : 'N/A';
+        const topic = row.c[1] && row.c[1].v ? row.c[1].v : 'No topic';
+        const sentiment = row.c[2] && row.c[2].v ? row.c[2].v : 'No sentiment';
+
+        // Create a new element for the submission and add it to the container.
+        const submissionDiv = document.createElement('div');
+        submissionDiv.className = 'submission';
+        submissionDiv.innerHTML = `<strong>Topic:</strong> ${topic} &nbsp;&nbsp; <strong>Sentiment:</strong> ${sentiment} <br>
+                                   <span class="time">${timestamp}</span>`;
+        container.appendChild(submissionDiv);
+      });
+    }
+
+    // Initial data load and periodic refresh every 10 seconds
+    fetchData();
+    setInterval(fetchData, 10000);
+  </script>
+</body>
+</html>
